@@ -19,31 +19,31 @@ namespace OptimizeMePlease
     /// 5. Start coding within GetAuthors_Optimized method
     /// GOOD LUCK! :D 
     /// </summary>
-    public class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             //Debugging 
-            BenchmarkService benchmarkService = new BenchmarkService();
-            benchmarkService.GetAuthors();
+            var benchmarkService = new BenchmarkService();
+            benchmarkService.GetAuthors_Optimized();
 
             //Comment me after first execution, please.
-            //IWillPopulateData();
+            //WillPopulateData();
 
-            //BenchmarkRunner.Run<BenchmarkService>();
+            BenchmarkRunner.Run<BenchmarkService>();
         }
 
-        public static void IWillPopulateData()
+        private static void WillPopulateData()
         {
-            string sqlConnectionString = @"Server=localhost;Database=OptimizeMePlease;Trusted_Connection=True;Integrated Security=true;MultipleActiveResultSets=true";
+            const string sqlConnectionString = @"Server=.;Database=OptimizeMePlease;Trusted_Connection=True;Integrated Security=true;MultipleActiveResultSets=true";
 
-            string workingDirectory = Environment.CurrentDirectory;
-            string path = Path.Combine(Directory.GetParent(workingDirectory).Parent.Parent.FullName, @"script.sql");
-            string script = File.ReadAllText(path);
+            var workingDirectory = Environment.CurrentDirectory;
+            var path = Path.Combine(Directory.GetParent(workingDirectory)!.Parent!.Parent!.FullName, @"script.sql");
+            var script = File.ReadAllText(path);
 
-            SqlConnection conn = new SqlConnection(sqlConnectionString);
+            var conn = new SqlConnection(sqlConnectionString);
 
-            Server server = new Server(new ServerConnection(conn));
+            var server = new Server(new ServerConnection(conn));
 
             server.ConnectionContext.ExecuteNonQuery(script);
         }

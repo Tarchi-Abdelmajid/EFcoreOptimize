@@ -41,7 +41,7 @@ namespace OptimizeMePlease
                                             UserEmail = x.User.Email,
                                             UserName = x.User.UserName,
                                             UserId = x.User.Id,
-                                            RoleId = x.User.UserRoles.FirstOrDefault(y => y.UserId == x.UserId).RoleId,
+                                            RoleId = x.User.UserRoles.First(y => y.UserId == x.UserId).RoleId,
                                             BooksCount = x.BooksCount,
                                             AllBooks = x.Books.Select(y => new BookDto
                                             {
@@ -62,20 +62,18 @@ namespace OptimizeMePlease
 
             var orderedAuthors = authors.OrderByDescending(x => x.BooksCount).ToList().Take(2).ToList();
 
-            List<AuthorDTO> finalAuthors = new List<AuthorDTO>();
+            var finalAuthors = new List<AuthorDTO>();
             foreach (var author in orderedAuthors)
             {
-                List<BookDto> books = new List<BookDto>();
+                var books = new List<BookDto>();
 
                 var allBooks = author.AllBooks;
 
                 foreach (var book in allBooks)
                 {
-                    if (book.Published.Year < 1900)
-                    {
-                        book.PublishedYear = book.Published.Year;
-                        books.Add(book);
-                    }
+                    if (book.Published.Year >= 1900) continue;
+                    book.PublishedYear = book.Published.Year;
+                    books.Add(book);
                 }
 
                 author.AllBooks = books;
@@ -88,8 +86,32 @@ namespace OptimizeMePlease
         [Benchmark]
         public List<AuthorDTO> GetAuthors_Optimized()
         {
-            List<AuthorDTO> authors = new List<AuthorDTO>();
-
+            using var dbContext = new AppDbContext();
+            var authors = new List<AuthorDTO>();
+            var authorsDb = dbContext.Authors.AsNoTracking().Include(b => b.Books.Where(x => x.Published.Year < 1900))
+                .Where(x => x.Country == "Serbia" && x.Age == 27).OrderByDescending(x => x.BooksCount).Take(2)
+                .AsEnumerable();
+            foreach (var auth in authorsDb)
+            {
+                var authorDto = new AuthorDTO
+                {
+                    Id = auth.Id,
+                    UserLastName = auth.User.LastName,
+                    UserEmail = auth.User.Email,
+                    UserName = auth.User.UserName,
+                    UserId = auth.User.Id,
+                    AllBooks = auth.Books.Select(y => new BookDto
+                    {
+                        Id = y.Id,
+                        Name = y.Name,
+                        Published = y.Published,
+                    }).ToList(),
+                    AuthorAge = auth.Age,
+                    AuthorCountry = auth.Country,
+                };
+                authors.Add(authorDto);
+            }
+                
             return authors;
         }
     }
